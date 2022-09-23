@@ -12,13 +12,12 @@ drive::SwerveModule::SwerveModule(int drivemotor_in, int turnmotor_in, int encod
     turnmotor = new motorcontrol::can::WPI_TalonFX(turnmotor_in);
     encoder = new sensors::CANCoder(encoder_in);
 
-    // Limit the PID Controller's input range between -pi and pi and set the input
-    // to be continuous.
+    // Limit the PID Controller's input range between -180 and 180 to decrease the maximum travel distance for PID.
     turnPIDController.EnableContinuousInput(
-        -units::radian_t{ wpi::numbers::pi },
-        units::radian_t{ wpi::numbers::pi }
+        -180,
+        180
     );
-    //turnPIDController.SetTolerance(units::radian_t { 5.0 * wpi::numbers::pi / 180 });    // For later :)
+    turnPIDController.SetTolerance(2.5);    // For later :)
 }
 
 frc::SwerveModuleState drive::SwerveModule::GetState() const {
@@ -42,30 +41,32 @@ void drive::SwerveModule::SetDesiredState(const frc::SwerveModuleState& refstate
 
     const auto driveff = driveFeedforward.Calculate(state.speed);    
     
+    double setpoint = (double)state.angle.Degrees();
+    if(abs((double)state.speed) <= ((double)(SwerveModule::kMaxSpeed * 0.05))) {
+        setpoint = lastAngle;
+    }
+
+    turnPIDController.SetSetpoint(setpoint);
+    const auto turnOutput = turnPIDController.Calculate(encoder->GetPosition());
+
     // TODO: get rid of these, but for now keep b/c we're only working on one module
     frc::SmartDashboard::PutNumber("state_angle", (double)state.angle.Degrees());
     frc::SmartDashboard::PutNumber("state_speed", (double)state.speed.value());
+    frc::SmartDashboard::PutNumber("pid_setpoint", (double)turnPIDController.GetSetpoint());
 
-    if(state.angle.Degrees() > 60_deg) {
-        auto angle = refstate.angle.Degrees();      // Not sure why this is here? Or why it's using refstate instead of state?
-    
-        const auto turnOutput = turnPIDController.Calculate(
-            units::radian_t{encoder->GetPosition() * (wpi::numbers::pi / 180) / kEncoderResolution},
-            state.angle.Radians()
-        );
-
-        frc::SmartDashboard::PutNumber("turn_output", (double)turnOutput);  // Get rid of this with the other ones
-
-        turnmotor->SetVoltage(units::volt_t { turnOutput });
+    if(!turnPIDController.AtSetpoint()) {    
+        frc::SmartDashboard::PutNumber("turn_output_percent", turnOutput);  // Get rid of this with the other ones
+        turnmotor->Set(motorcontrol::ControlMode::PercentOutput, turnOutput);
     }
     else {
-        turnmotor->SetVoltage(0_V);
+        turnmotor->Set(motorcontrol::ControlMode::PercentOutput, 0.0);
     }
 
 
     // Set the motor outputs.
     drivemotor->SetVoltage(units::volt_t{driveOutput} + driveff);
 
+    lastAngle = (double)state.angle.Degrees();
 }
 
 double drive::SwerveModule::getTurnEncPos() {

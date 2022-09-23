@@ -49,7 +49,7 @@ void drive::Drive::tick(bool fieldRelative) {
 
     const auto translation = frc::Translation2d((units::meter_t)yAxis, (units::meter_t)xAxis) * (double)SwerveModule::kMaxSpeed;
 
-    const auto rotation = (rAxis * 6.5_rad) / 1_s;
+    const auto rotation = (rAxis * SwerveModule::kMaxAngularSpeed);
 
     frc::ChassisSpeeds nonrelspeeds = frc::ChassisSpeeds();
     nonrelspeeds.omega = rotation;
@@ -60,7 +60,7 @@ void drive::Drive::tick(bool fieldRelative) {
         translation.X() / 1_s,
         translation.Y() / 1_s,
         rotation, 
-        gyro.GetRotation2d()
+        -gyro.GetRotation2d()
     );
 
     auto states = kinematics.ToSwerveModuleStates(fieldRelative ? 
@@ -73,11 +73,11 @@ void drive::Drive::tick(bool fieldRelative) {
     auto [fl, fr, bl, br] = states;
 
     frontleft->SetDesiredState(fl);
-    //frontright->SetDesiredState(fr);
-    //backleft->SetDesiredState(bl);
-    //backright->SetDesiredState(br);
+    frontright->SetDesiredState(fr);
+    backleft->SetDesiredState(bl);
+    backright->SetDesiredState(br);
 
-    //backright->SetDesiredState(frc::SwerveModuleState { 
+    //frontright->SetDesiredState(frc::SwerveModuleState { 
     //    units::meters_per_second_t { 0.0 },
     //    units::radian_t { 0 },
     //});

@@ -42,16 +42,17 @@ namespace drive {
             ctre::phoenix::sensors::CANCoder*               encoder;
 
             frc2::PIDController drivePIDController{0.0001, 0.0, 0.0};
-            frc::ProfiledPIDController<units::radians> turnPIDController{
-                0.01, // P: 45.0
-                0.0, // I: 0
-                0.535, // D: 0.535
-                {kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration}
+            frc2::PIDController turnPIDController {
+                0.011, // P: 0.011
+                0.000, // I: 0.00
+                0.0000000025, // D: 0.0000000025
             };
 
             frc::SimpleMotorFeedforward<units::meters> driveFeedforward{1_V,
                 3_V / 1_mps};
             frc::SimpleMotorFeedforward<units::radians> turnFeedforward{
                 1_V, 0.5_V / 1_rad_per_s};
+
+            double lastAngle = 0;
     };
 }
