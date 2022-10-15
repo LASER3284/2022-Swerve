@@ -23,10 +23,10 @@ namespace drive {
             double getTurnEncPos();
             double getDriveEncPos();
 
-            static constexpr units::meters_per_second_t kMaxSpeed = 2.0_mps;  // 2 meters per second
+            static constexpr units::meters_per_second_t kMaxSpeed = 4.0_mps;  // 2 meters per second
             static constexpr units::radians_per_second_t kMaxAngularSpeed{
-                wpi::numbers::pi / 2
-            };  // 1/4 rotation per second
+                wpi::numbers::pi
+            };  // 1/2 rotation per second
             
         private:
             static constexpr double kWheelRadius = 0.0508;
@@ -41,17 +41,15 @@ namespace drive {
             ctre::phoenix::motorcontrol::can::WPI_TalonFX*  turnmotor;
             ctre::phoenix::sensors::CANCoder*               encoder;
 
-            frc2::PIDController drivePIDController{0.0001, 0.0, 0.0};
+            frc2::PIDController drivePIDController { 0.0001, 0.0, 0.0};
             frc2::PIDController turnPIDController {
                 0.011, // P: 0.011
                 0.000, // I: 0.00
                 0.0000000025, // D: 0.0000000025
             };
 
-            frc::SimpleMotorFeedforward<units::meters> driveFeedforward{1_V,
-                3_V / 1_mps};
-            frc::SimpleMotorFeedforward<units::radians> turnFeedforward{
-                1_V, 0.5_V / 1_rad_per_s};
+            frc::SimpleMotorFeedforward<units::meters> driveFeedforward{ 1_V, 3_V / 1_mps };
+            frc::SimpleMotorFeedforward<units::radians> turnFeedforward{ 1_V, 0.5_V / 1_rad_per_s };
 
             double lastAngle = 0;
     };

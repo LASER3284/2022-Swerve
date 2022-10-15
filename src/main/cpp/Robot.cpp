@@ -23,7 +23,11 @@ Robot::~Robot() {
 void Robot::RobotInit() {
     m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
     m_chooser.AddOption(kAutoNameCustom, kAutoNameCustom);
+
     frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
+
+    // Add in a boolean for field relative/oriented drive.
+    frc::SmartDashboard::PutBoolean("field_oriented", false);
 }
 
 /**
@@ -51,8 +55,6 @@ void Robot::RobotPeriodic() {
  */
     void Robot::AutonomousInit() {
     m_autoSelected = m_chooser.GetSelected();
-    // m_autoSelected = SmartDashboard::GetString("Auto Selector",
-    //     kAutoNameDefault);
     fmt::print("Auto selected: {}\n", m_autoSelected);
 
     if (m_autoSelected == kAutoNameCustom) {
@@ -75,7 +77,7 @@ void Robot::TeleopInit() {
 }
 
 void Robot::TeleopPeriodic() {
-    drivetrain->tick(false);
+    drivetrain->tick(SmartDashboard::GetBoolean("field_oriented", false));
 }
 
 void Robot::DisabledInit() {}

@@ -41,27 +41,24 @@ void drive::SwerveModule::SetDesiredState(const frc::SwerveModuleState& refstate
 
     const auto driveff = driveFeedforward.Calculate(state.speed);    
     
+    // If we're not moving at <0.15x speed, then we can just give up on rotating
+    // This will help avoid jitter on the turn motors.
     double setpoint = (double)state.angle.Degrees();
-    if(abs((double)state.speed) <= ((double)(SwerveModule::kMaxSpeed * 0.05))) {
+    if(abs((double)state.speed) <= ((double)(SwerveModule::kMaxSpeed * 0.15))) {
         setpoint = lastAngle;
     }
 
     turnPIDController.SetSetpoint(setpoint);
     const auto turnOutput = turnPIDController.Calculate(encoder->GetPosition());
 
-    // TODO: get rid of these, but for now keep b/c we're only working on one module
-    frc::SmartDashboard::PutNumber("state_angle", (double)state.angle.Degrees());
-    frc::SmartDashboard::PutNumber("state_speed", (double)state.speed.value());
-    frc::SmartDashboard::PutNumber("pid_setpoint", (double)turnPIDController.GetSetpoint());
-
-    if(!turnPIDController.AtSetpoint()) {    
-        frc::SmartDashboard::PutNumber("turn_output_percent", turnOutput);  // Get rid of this with the other ones
+    if(!turnPIDController.AtSetpoint()) {
+        // If we're not at the setpoint, move the turn motor.
         turnmotor->Set(motorcontrol::ControlMode::PercentOutput, turnOutput);
     }
     else {
+        // If we're at the setpoint, stop the turn motor
         turnmotor->Set(motorcontrol::ControlMode::PercentOutput, 0.0);
     }
-
 
     // Set the motor outputs.
     drivemotor->SetVoltage(units::volt_t{driveOutput} + driveff);

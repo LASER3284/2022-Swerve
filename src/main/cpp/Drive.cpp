@@ -21,31 +21,15 @@ void drive::Drive::set_joystick(bool state) {
 }
 
 void drive::Drive::tick(bool fieldRelative) {
+    // Reset the gyro if the driver presses start.
+    // This'll help avoid drift in field-oriented mode.
+    if(controller->GetRawButtonReleased(8)) {
+        gyro.Reset();
+    }
 
-    /*
-    units::meters_per_second_t xSpeed = -xspeedLimiter.Calculate(
-        frc::ApplyDeadband(controller->GetRawAxis(0), 0.05)) *
-        SwerveModule::kMaxSpeed;
-
-    units::meters_per_second_t ySpeed = -yspeedLimiter.Calculate(
-        frc::ApplyDeadband(controller->GetRawAxis(1), 0.05)) *
-        SwerveModule::kMaxSpeed;
-
-    units::radians_per_second_t rot = -rotLimiter.Calculate(
-        frc::ApplyDeadband(controller->GetRawAxis(4), 0.05)) *
-        SwerveModule::kMaxAngularSpeed;
-
-
-    auto states = kinematics.ToSwerveModuleStates(
-        fieldRelative ? frc::ChassisSpeeds::FromFieldRelativeSpeeds(
-            xSpeed, ySpeed, rot, gyro.GetRotation2d()
-        )
-        : frc::ChassisSpeeds{xSpeed, ySpeed, rot});
-    */
-
-    double yAxis = frc::ApplyDeadband(-controller->GetRawAxis(1), 0.1);
-    double xAxis = frc::ApplyDeadband(-controller->GetRawAxis(0), 0.1);
-    double rAxis = frc::ApplyDeadband(-controller->GetRawAxis(4), 0.1);
+    double yAxis = frc::ApplyDeadband(-controller->GetRawAxis(1), 0.15);
+    double xAxis = frc::ApplyDeadband(-controller->GetRawAxis(0), 0.15);
+    double rAxis = frc::ApplyDeadband(-controller->GetRawAxis(4), 0.15);
 
     const auto translation = frc::Translation2d((units::meter_t)yAxis, (units::meter_t)xAxis) * (double)SwerveModule::kMaxSpeed;
 
@@ -60,7 +44,7 @@ void drive::Drive::tick(bool fieldRelative) {
         translation.X() / 1_s,
         translation.Y() / 1_s,
         rotation, 
-        -gyro.GetRotation2d()
+        gyro.GetRotation2d()
     );
 
     auto states = kinematics.ToSwerveModuleStates(fieldRelative ? 
@@ -76,11 +60,6 @@ void drive::Drive::tick(bool fieldRelative) {
     frontright->SetDesiredState(fr);
     backleft->SetDesiredState(bl);
     backright->SetDesiredState(br);
-
-    //frontright->SetDesiredState(frc::SwerveModuleState { 
-    //    units::meters_per_second_t { 0.0 },
-    //    units::radian_t { 0 },
-    //});
 }
 
 void drive::Drive::print() {
